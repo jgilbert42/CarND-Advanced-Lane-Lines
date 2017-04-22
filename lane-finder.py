@@ -135,19 +135,16 @@ def find_lr_window_centroids(image, window_width, window_height, margin):
         l_min_index = int(max(l_center+offset-margin,0))
         l_max_index = int(min(l_center+offset+margin,image.shape[1]))
         l_max = np.argmax(conv_signal[l_min_index:l_max_index])
-        if l_max > 25:
+        if l_max > 50:
             left_centroids.append((l_center, y_center))
             l_center = l_max+l_min_index-offset
         # Find the best right centroid by using past right center as a reference
         r_min_index = int(max(r_center+offset-margin,0))
         r_max_index = int(min(r_center+offset+margin,image.shape[1]))
         r_max = np.argmax(conv_signal[r_min_index:r_max_index])
-        if r_max > 25:
+        if r_max > 50:
             right_centroids.append((r_center, y_center))
             r_center = r_max+r_min_index-offset
-        # Add what we found for that layer
-
-        #print(l_max, r_max)
 
     return left_centroids, right_centroids
 
@@ -236,9 +233,22 @@ def pipeline_image(img, save_images=None, save_suffix='.jpg'):
 
     #identified lane-line pixels and fit their positions with a polynomial
     l_points, r_points = find_lr_window_centroids(warped, window_width, window_height, 100)
+    global last_l_points, last_r_points
+    if len(l_points) < 5 and len(last_l_points) > 0:
+        print("less than 4 l_points:", len(r_points))
+        # use the previous points
+        l_points = last_l_points
+    else:
+        last_l_points = l_points
     l_points = np.array(l_points, dtype=np.int32)
-    r_points = np.array(r_points, dtype=np.int32)
     l_poly = np.polyfit(l_points[:,1], l_points[:,0], 2)
+
+    if len(r_points) < 5 and len(last_r_points) > 0:
+        print("less than 4 r_points:", len(r_points))
+        r_points = last_r_points
+    else:
+        last_r_points = r_points
+    r_points = np.array(r_points, dtype=np.int32)
     r_poly = np.polyfit(r_points[:,1], r_points[:,0], 2)
 
     yval = np.arange(0, warped.shape[0])
@@ -249,8 +259,6 @@ def pipeline_image(img, save_images=None, save_suffix='.jpg'):
         lanes = warped*255
         lanes = np.array(cv2.merge((lanes,lanes,lanes)),np.uint8) # make window pixels green
         lanes = draw_window_boxes(lanes, l_points, r_points, window_width, window_height)
-        #draw_text(lanes, str(l_points), (50, 50))
-        #draw_text(lanes, str(r_points), (50, 75))
 
         for p in l_points:
             cv2.circle(lanes, (p[0], p[1]), 10, (255,0,255), -1)
@@ -338,9 +346,12 @@ def show_images(imgs, titles):
     plt.show()
 
 
+last_l_points = []
+last_r_points = []
+
 mtx, dist = calibrate_camera()
-process_test_images()
-#process_video('project_video.mp4', 'output.mp4')
+#process_test_images()
+process_video('project_video.mp4', 'output.mp4')
 #process_video('challenge_video.mp4', 'challenge_output.mp4')
 #process_video('harder_challenge_video.mp4', 'harder_challenge_output.mp4')
 
