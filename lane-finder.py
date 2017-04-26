@@ -197,7 +197,7 @@ def pipeline_image(img, save_images=None, save_suffix='.jpg'):
 
     undistorted = undistort(img)
     if save_images:
-        save_output_image(img, 'undistorted' + save_suffix)
+        save_output_image(undistorted, 'undistorted' + save_suffix)
 
     #binary = abs_sobel_thresh(undistorted, orient='x', sobel_kernel=15, thresh=(20,100))
     binary = color_threshold(undistorted)
@@ -235,7 +235,7 @@ def pipeline_image(img, save_images=None, save_suffix='.jpg'):
     l_points, r_points = find_lr_window_centroids(warped, window_width, window_height, 100)
     global last_l_points, last_r_points
     if len(l_points) < 5 and len(last_l_points) > 0:
-        print("less than 4 l_points:", len(r_points))
+        #print("less than 4 l_points:", len(r_points))
         # use the previous points
         l_points = last_l_points
     else:
@@ -244,7 +244,7 @@ def pipeline_image(img, save_images=None, save_suffix='.jpg'):
     l_poly = np.polyfit(l_points[:,1], l_points[:,0], 2)
 
     if len(r_points) < 5 and len(last_r_points) > 0:
-        print("less than 4 r_points:", len(r_points))
+        #print("less than 4 r_points:", len(r_points))
         r_points = last_r_points
     else:
         last_r_points = r_points
@@ -350,8 +350,8 @@ last_l_points = []
 last_r_points = []
 
 mtx, dist = calibrate_camera()
-#process_test_images()
+process_test_images()
 process_video('project_video.mp4', 'output.mp4')
-#process_video('challenge_video.mp4', 'challenge_output.mp4')
-#process_video('harder_challenge_video.mp4', 'harder_challenge_output.mp4')
+process_video('challenge_video.mp4', 'challenge_output.mp4')
+process_video('harder_challenge_video.mp4', 'harder_challenge_output.mp4')
 
